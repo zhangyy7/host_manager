@@ -14,7 +14,6 @@ class HostManager(object):
 
     def __init__(self):
         """初始化所需参数."""
-        self.cls = HostManager
         self.ssh_client = paramiko.SSHClient()
 
     def show_hosts(self, parameter_list):
@@ -29,7 +28,7 @@ class HostManager(object):
         """删除主机."""
         pass
 
-    def exec_command(self):
+    def exec_command(self, command):
         """在指定主机上执行命令."""
         pass
 
