@@ -2,24 +2,28 @@
     "1001": {
         "hostname": "192.168.146.132",
         "port": 22,
+        "username": "zhangyy",
         "group": "Ubuntu",
         "version": "16.10"
     },
     "1002": {
         "hostname": "192.168.146.133",
         "port": 22,
+        "username": "zhangyy",
         "group": "Ubuntu",
         "version": "16.10"
     },
     "1003": {
         "hostname": "192.168.146.134",
         "port": 22,
+        "username": "zhangyy",
         "group": "CentOS",
         "version": "6.6"
     },
     "1004": {
         "hostname": "192.168.146.135",
         "port": 22,
+        "username": "zhangyy",
         "group": "CentOS",
         "version": "7.0"
     }
