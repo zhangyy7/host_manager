@@ -37,8 +37,8 @@ class HostManager(object):
         host_info_str = '\n'.join(host_info_list)
         print(host_info_str)
 
-    def show_hosts_by_group(self):
-        """加载主机配置文件，并展示所有主机信息."""
+    def show_hosts_by_group(self, group):
+        """加载主机配置文件，按组查询."""
         pass
 
     def add_host(self, hostname, port, username, group, version):
@@ -81,6 +81,7 @@ class HostManager(object):
         stdin, stdout, stderr = ssh_client.exec_command(command)
         res, err = stdout.read(), stderr.read()
         result = res if res else err
+        ssh_client.close()
         self.result_queue[hostname].put(result)
 
     def multi_exec_command(self, host_list, command):
@@ -159,6 +160,7 @@ class HostManager(object):
         transfer.connect(username=username, pkey=self._private_key)
         sftp = transfer.open_sftp_client()
         sftp.put(localpath=local_path, remotepath=remote_path)
+        sftp.close()
 
     def _get(self, host, username, local_path, remote_path):
         """在类内部由transfer_files方法调用.
@@ -171,6 +173,7 @@ class HostManager(object):
         transfer.connect(username=username, pkey=self._private_key)
         sftp = transfer.open_sftp_client()
         sftp.get(remote_path, local_path)
+        sftp.close()
 
     def _json_load_from_file(self):
         """从文件load数据到内存."""
@@ -182,3 +185,24 @@ class HostManager(object):
         """将内存的数据序列号到文件."""
         with open(self._hosts_filepath, 'w') as hosts_fp:
             json.dump(hosts, hosts_fp, sort_keys=True, ensure_ascii=False)
+
+
+class InterActive(object):
+    """用户交互类."""
+
+    def __init__(self):
+        """实例化一个HostManager."""
+        self.manager = HostManager()
+
+    def show_host(self):
+        """根据用户输入调用相应的方法."""
+        query_mode = input('请选择查询方式【1.查询所有主机 2.根据分组查询】').strip()
+        if query_mode == "2":
+            group = input("请选择要查询的分组")
+
+    def _show_host(self, query_mode, group=None):
+        """在类的内部由show_host调用."""
+        if query_mode == "1":
+            self.manager.show_all_hosts()
+        elif query_mode == "2":
+            self.manager.show_hosts_by_group(group)
