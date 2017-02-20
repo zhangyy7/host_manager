@@ -65,6 +65,7 @@ class HostManager(object):
         hosts = self._json_load_from_file()
         if host_id in hosts:
             del hosts[host_id]
+        self._json_dump_to_file(hosts)
 
     def exec_command(self, hostname, port, username, command):
         """在指定主机上执行命令.
@@ -160,6 +161,7 @@ class HostManager(object):
         transfer.connect(username=username, pkey=self._private_key)
         sftp = transfer.open_sftp_client()
         sftp.put(localpath=local_path, remotepath=remote_path)
+        print("上传成功！")
         sftp.close()
 
     def _get(self, host, username, local_path, remote_path):
@@ -186,6 +188,22 @@ class HostManager(object):
         with open(self._hosts_filepath, 'w') as hosts_fp:
             json.dump(hosts, hosts_fp, sort_keys=True, ensure_ascii=False)
 
+    def get_host_list(self, hostid_list):
+        """返回hostname,port,username的列表.
+
+        param hostid_list: 包含hostid的列表
+        """
+        hosts = self._json_load_from_file()
+        hosts_list = []
+        for hostid in hostid_list:
+            if hostid in hosts:
+                hostname = hosts[hostid]["hostname"]
+                port = hosts[hostid]["port"]
+                username = hosts[hostid]["username"]
+                host_tuple = (hostname, port, username)
+                hosts_list.append(host_tuple)
+        return hosts_list
+
 
 class InterActive(object):
     """用户交互类."""
@@ -196,9 +214,11 @@ class InterActive(object):
 
     def show_host(self):
         """根据用户输入调用相应的方法."""
+        group = None
         query_mode = input('请选择查询方式【1.查询所有主机 2.根据分组查询】').strip()
         if query_mode == "2":
             group = input("请选择要查询的分组")
+        self._show_host(query_mode, group)
 
     def _show_host(self, query_mode, group=None):
         """在类的内部由show_host调用."""
@@ -206,3 +226,48 @@ class InterActive(object):
             self.manager.show_all_hosts()
         elif query_mode == "2":
             self.manager.show_hosts_by_group(group)
+
+    def _get_host_list(self):
+        """在类内部调用，获取主机列表."""
+        hostids = input("请输入目标主机的hostid，多个主机用“,”逗号隔开：\n").strip()
+        hostid_list = hostids.split(',')
+        hosts_list = self.manager.get_host_list(hostid_list)
+        return hosts_list
+
+    def exec_command(self):
+        """根据用户输入执行命令."""
+        hosts_list = self._get_host_list()
+        command = input("请输入命令：\n").strip()
+        self.manager.multi_exec_command(hosts_list, command)
+        is_show_result = input("是否立即查看执行结果：【1.是 2.否】")
+        if is_show_result == "1":
+            result = self.manager.show_all_result()
+            print(result)
+
+    def transfer_files(self):
+        """根据用户输入，与指定主机传输文件."""
+        hosts_list = self._get_host_list()
+        trans_type = input("请选择传输类型【1.上传 2.下载】：\n")
+        localpath = input("请输入本地路径：\n").strip()
+        remotepath = input("请输入远程路径：\n").strip()
+        self.manager.transfer_files(
+            hosts_list, trans_type, localpath, remotepath)
+
+    def add_host(self):
+        """根据用户输入，添加主机信息.
+
+        hostname, port, username, group, version
+        """
+        hostname = input("请输入主机IP地址：\n").strip()
+        port = input("请输入主机端口：\n").strip()
+        username = input("请输入主机用户名：\n").strip()
+        group = input("请输入主机组名称（组名为Linux发行版本Ubuntu、centos等）：\n").strip()
+        version = input("请输入系统版本：\n").strip()
+        self.manager.add_host(hostname, port, username, group, version)
+
+    def remove_host(self):
+        """删除主机."""
+        hostid = input("请输入要删除的hostid：\n").strip()
+        self.manager.remove_host(hostid)
+
+manager = InterActive()
